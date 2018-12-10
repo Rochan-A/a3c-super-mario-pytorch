@@ -4,10 +4,13 @@ import gym
 from gym import spaces
 from PIL import Image
 import cv2
+from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 def _process_frame_mario(frame):
     if frame is not None:           # for future meta implementation
-        img = np.reshape(frame, [224, 256, 3]).astype(np.float32)        
+        img = np.reshape(frame, [224, 256, 3]).astype(np.float32)
         img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
         x_t = cv2.resize(img, (84, 84))
         x_t = np.reshape(x_t, [1, 84, 84])
@@ -16,8 +19,6 @@ def _process_frame_mario(frame):
     else:
         x_t = np.zeros((1, 84, 84))
     return x_t
-
-
 
 class ProcessFrameMario(gym.Wrapper):
     def __init__(self, env=None):
@@ -29,10 +30,10 @@ class ProcessFrameMario(gym.Wrapper):
         self.prev_dist = 40
 
     def _step(self, action):
-        ''' 
+        '''
             Implementing custom rewards
                 Time = -0.1
-                Distance = +1 or 0 
+                Distance = +1 or 0
                 Player Status = +/- 5
                 Score = 2.5 x [Increase in Score]
                 Done = +50 [Game Completed] or -50 [Game Incomplete]
@@ -42,10 +43,10 @@ class ProcessFrameMario(gym.Wrapper):
 
         reward = min(max((info['distance'] - self.prev_dist), 0), 2)
         self.prev_dist = info['distance']
-        
+
         reward += (self.prev_time - info['time']) * -0.1
         self.prev_time = info['time']
-        
+
         reward += (info['player_status'] - self.prev_stat) * 5
         self.prev_stat = info['player_status']
 
@@ -85,7 +86,7 @@ class BufferSkipFrames(gym.Wrapper):
         total_reward = reward
         self.buffer.append(obs)
 
-        for i in range(self.skip - 1):            
+        for i in range(self.skip - 1):
             if not done:
                 obs, reward, done, info = self.env.step(action)
                 total_reward += reward
@@ -107,7 +108,7 @@ class BufferSkipFrames(gym.Wrapper):
         frame = np.stack(self.buffer, axis=0)
         frame = np.reshape(frame, (4, 84, 84))
         return frame
-    
+
     def change_level(self, level):
         self.env.change_level(level)
 
@@ -132,7 +133,7 @@ class NormalizedEnv(gym.ObservationWrapper):
             unbiased_std = self.state_std / (1 - pow(self.alpha, self.num_steps))
 
             return (observation - unbiased_mean) / (unbiased_std + 1e-8)
-        
+
         else:
             return observation
 
@@ -147,6 +148,8 @@ def wrap_mario(env):
     return env
 
 def create_mario_env(env_id):
-    env = gym.make(env_id)
+    env = gym_super_mario_bros.make(env_id)
+    env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+    # env = gym.make(env_id)
     env = wrap_mario(env)
     return env

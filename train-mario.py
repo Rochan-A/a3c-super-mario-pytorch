@@ -13,7 +13,6 @@ from optimizer.sharedadam import SharedAdam
 from trainer.a3c.train import train, test
 from common.mario_actions import ACTIONS
 
-
 SAVEPATH = os.getcwd() + '/save/mario_a3c_params.pkl'
 
 parser = argparse.ArgumentParser(description='A3C')
@@ -37,7 +36,7 @@ parser.add_argument('--num-steps', type=int, default=50,
                     help='number of forward steps in A3C (default: 50)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--env-name', default='metaSuperMarioBros-1-1-v0',
+parser.add_argument('--env-name', default='SuperMarioBros-1-1-v0',
                     help='environment to train on (default: SuperMarioBros-1-1-v0)')
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
@@ -56,9 +55,9 @@ print("Cuda: " + str(torch.cuda.is_available()))
 
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
-        
+
     args = parser.parse_args()
-    env = create_mario_env(args.env_name)    
+    env = create_mario_env(args.env_name)
 
     shared_model = ActorCritic(
         env.observation_space.shape[0], len(ACTIONS))
@@ -66,7 +65,7 @@ if __name__ == '__main__':
         shared_model.cuda()
 
     shared_model.share_memory()
-    
+
     if os.path.isfile(args.save_path):
         print('Loading A3C parametets ...')
         shared_model.load_state_dict(torch.load(args.save_path))
@@ -76,7 +75,7 @@ if __name__ == '__main__':
     optimizer = SharedAdam(shared_model.parameters(), lr=args.lr)
     optimizer.share_memory()
 
-    print (color.BLUE + "No of available cores : {}".format(mp.cpu_count()) + color.END) 
+    print (color.BLUE + "No of available cores : {}".format(mp.cpu_count()) + color.END)
 
     processes = []
 
@@ -84,15 +83,15 @@ if __name__ == '__main__':
     lock = mp.Lock()
 
     p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
-    
+
     p.start()
     processes.append(p)
 
     num_procs = args.num_processes
     no_sample = args.non_sample
-   
+
     if args.num_processes > 1:
-        num_procs = args.num_processes - 1    
+        num_procs = args.num_processes - 1
 
     sample_val = num_procs - no_sample
 
