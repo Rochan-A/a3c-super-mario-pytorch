@@ -102,7 +102,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
             entropies.append(entropy)
 
             if select_sample:
-                action = prob.multinomial().data
+                action = prob.multinomial(num_samples=1).data
             else:
                 action = prob.max(-1, keepdim=True)[1].data
 
