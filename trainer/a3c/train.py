@@ -219,12 +219,12 @@ def test(rank, args, shared_model, counter):
             # Sync with the shared model
             if done:
                 model.load_state_dict(shared_model.state_dict())
-                    cx = Variable(torch.zeros(1, 240)).type(FloatTensor)
-                    hx = Variable(torch.zeros(1, 240)).type(FloatTensor)
+                cx = Variable(torch.zeros(1, 240)).type(FloatTensor)
+                hx = Variable(torch.zeros(1, 240)).type(FloatTensor)
 
             else:
-                    cx = Variable(cx.data).type(FloatTensor)
-                    hx = Variable(hx.data).type(FloatTensor)
+                cx = Variable(cx.data).type(FloatTensor)
+                hx = Variable(hx.data).type(FloatTensor)
 
             state_inp = Variable(state.unsqueeze(0)).type(FloatTensor)
             value, logit, (hx, cx) = model((state_inp, (hx, cx)))

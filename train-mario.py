@@ -84,10 +84,10 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+    #p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
 
-    p.start()
-    processes.append(p)
+    #p.start()
+    #processes.append(p)
 
     num_procs = args.num_processes
     no_sample = args.non_sample
