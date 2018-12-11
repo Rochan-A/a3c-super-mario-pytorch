@@ -80,8 +80,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
         # Sync with the shared model
         model.load_state_dict(shared_model.state_dict())
         if done:
-            cx = Variable(torch.zeros(1, 512)).type(FloatTensor)
-            hx = Variable(torch.zeros(1, 512)).type(FloatTensor)
+            cx = Variable(torch.zeros(1, 256)).type(FloatTensor)
+            hx = Variable(torch.zeros(1, 256)).type(FloatTensor)
         else:
             cx = Variable(cx.data).type(FloatTensor)
             hx = Variable(hx.data).type(FloatTensor)
@@ -219,8 +219,8 @@ def test(rank, args, shared_model, counter):
         if done:
             model.load_state_dict(shared_model.state_dict())
             with torch.no_grad():
-                cx = Variable(torch.zeros(1, 512)).type(FloatTensor)
-                hx = Variable(torch.zeros(1, 512)).type(FloatTensor)
+                cx = Variable(torch.zeros(1, 256)).type(FloatTensor)
+                hx = Variable(torch.zeros(1, 256)).type(FloatTensor)
 
         else:
             with torch.no_grad():
