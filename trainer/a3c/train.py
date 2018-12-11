@@ -14,10 +14,12 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 from models.actor_critic import ActorCritic
-from common.atari_wrapper import create_mario_env
+# from common.atari_wrapper import create_mario_env
 from common.mario_actions import ACTIONS
 
-
+from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 def ensure_shared_grads(model, shared_model):
     for param, shared_param in zip(model.parameters(),
@@ -44,7 +46,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
     ByteTensor = torch.cuda.ByteTensor if args.use_cuda else torch.ByteTensor
 
 
-    env = create_mario_env(args.env_name)
+    env = gym_super_mario_bros.make(args.env_name)
+    # env = create_mario_env(args.env_name)
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], len(ACTIONS))
@@ -175,7 +178,8 @@ def test(rank, args, shared_model, counter):
     DoubleTensor = torch.cuda.DoubleTensor if args.use_cuda else torch.DoubleTensor
     ByteTensor = torch.cuda.ByteTensor if args.use_cuda else torch.ByteTensor
 
-    env = create_mario_env(args.env_name)
+    env = gym_super_mario_bros.make(args.env_name)
+    # env = create_mario_env(args.env_name)
     """ 
         need to implement Monitor wrapper with env.change_level
     """
