@@ -67,7 +67,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
     for num_iter in count():
 
         if rank == 0:
-            env.render()
+            # env.render()
 
             if num_iter % args.save_interval == 0 and num_iter > 0:
                 print ("Saving model at :" + args.save_path)
@@ -235,7 +235,7 @@ def test(rank, args, shared_model, counter):
             print("Process: Test Action: {}".format(str(action_out)))
 
             state, reward, done, _ = env.step(int(action))
-            env.render()
+            # env.render()
             done = done or episode_length >= args.max_episode_length
             reward_sum += reward
 
