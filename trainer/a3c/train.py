@@ -59,23 +59,24 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
     model.train()
 
     state = env.reset()
-    state = torch.from_numpy(state)
+    state = torch.from_numpy(np.flip(state,axis=0).copy())
+    # state = torch.from_numpy(state)
     done = True
 
     episode_length = 0
     for num_iter in count():
-        
+
         if rank == 0:
             env.render()
 
             if num_iter % args.save_interval == 0 and num_iter > 0:
-                print ("Saving model at :" + args.save_path)            
+                print ("Saving model at :" + args.save_path)
                 torch.save(shared_model.state_dict(), args.save_path)
 
-        if num_iter % (args.save_interval * 2.5) == 0 and num_iter > 0 and rank == 1:    # Second saver in-case first processes crashes 
-            print ("Saving model for process 1 at :" + args.save_path)            
+        if num_iter % (args.save_interval * 2.5) == 0 and num_iter > 0 and rank == 1:    # Second saver in-case first processes crashes
+            print ("Saving model for process 1 at :" + args.save_path)
             torch.save(shared_model.state_dict(), args.save_path)
-            
+
         # Sync with the shared model
         model.load_state_dict(shared_model.state_dict())
         if done:
@@ -90,25 +91,25 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
         rewards = []
         entropies = []
         reason =''
-        
+
         for step in range(args.num_steps):
-            episode_length += 1            
+            episode_length += 1
             state_inp = Variable(state.unsqueeze(0)).type(FloatTensor)
             value, logit, (hx, cx) = model((state_inp, (hx, cx)))
             prob = F.softmax(logit, dim=-1)
             log_prob = F.log_softmax(logit, dim=-1)
             entropy = -(log_prob * prob).sum(-1, keepdim=True)
             entropies.append(entropy)
-            
+
             if select_sample:
                 action = prob.multinomial().data
             else:
                 action = prob.max(-1, keepdim=True)[1].data
 
             log_prob = log_prob.gather(-1, Variable(action))
-            
+
             action_out = ACTIONS[action][0, 0]
-            
+
             # print("Process: {} Action: {}".format(rank,  str(action_out)))
 
             state, reward, done, _ = env.step(action_out)
@@ -126,7 +127,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
                 print ("Process {} has completed.".format(rank))
 
             env.locked_levels = [False] + [True] * 31
-            state = torch.from_numpy(state)
+            state = torch.from_numpy(np.flip(state,axis=0).copy())
+            # state = torch.from_numpy(state)
             values.append(value)
             log_probs.append(log_prob)
             rewards.append(reward)
@@ -159,7 +161,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
                 log_probs[i] * Variable(gae).type(FloatTensor) - args.entropy_coef * entropies[i]
 
         total_loss = policy_loss + args.value_loss_coef * value_loss
-        
+
         print ("Process {} loss :".format(rank), total_loss.data)
         # print("Process: {} Episode: {}".format(rank,  str(episode_length)))
         optimizer.zero_grad()
@@ -180,12 +182,12 @@ def test(rank, args, shared_model, counter):
 
     env = gym_super_mario_bros.make(args.env_name)
     # env = create_mario_env(args.env_name)
-    """ 
+    """
         need to implement Monitor wrapper with env.change_level
     """
     # expt_dir = 'video'
     # env = wrappers.Monitor(env, expt_dir, force=True, video_callable=lambda count: count % 10 == 0)
-    
+
     env.seed(args.seed + rank)
 
     model = ActorCritic(env.observation_space.shape[0], len(ACTIONS))
@@ -194,15 +196,16 @@ def test(rank, args, shared_model, counter):
     model.eval()
 
     state = env.reset()
-    state = torch.from_numpy(state)
+    state = torch.from_numpy(np.flip(state,axis=0).copy())
+    # state = torch.from_numpy(state)
     reward_sum = 0
     done = True
     savefile = os.getcwd() + '/save/mario_curves.csv'
-    
+
     title = ['Time','No. Steps', 'Total Reward', 'Episode Length']
     with open(savefile, 'a', newline='') as sfile:
         writer = csv.writer(sfile)
-        writer.writerow(title)    
+        writer.writerow(title)
 
     start_time = time.time()
 
@@ -221,16 +224,16 @@ def test(rank, args, shared_model, counter):
         else:
             cx = Variable(cx.data, volatile=True).type(FloatTensor)
             hx = Variable(hx.data, volatile=True).type(FloatTensor)
-        
+
 
         state_inp = Variable(state.unsqueeze(0), volatile=True).type(FloatTensor)
         value, logit, (hx, cx) = model((state_inp, (hx, cx)))
         prob = F.softmax(logit, dim=-1)
         action = prob.max(-1, keepdim=True)[1].data
-        
+
         action_out = ACTIONS[action][0, 0]
         # print("Process: Test Action: {}".format(str(action_out)))
-        
+
         state, reward, done, _ = env.step(action_out)
         env.render()
         done = done or episode_length >= args.max_episode_length
@@ -244,17 +247,17 @@ def test(rank, args, shared_model, counter):
         if done:
             print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
                 time.strftime("%Hh %Mm %Ss",
-                              time.gmtime(time.time() - start_time)), 
+                              time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
-            
+
             data = [time.time() - ep_start_time,
                     counter.value, reward_sum, episode_length]
-            
+
             with open(savefile, 'a', newline='') as sfile:
                 writer = csv.writer(sfile)
                 writer.writerows([data])
-            
+
             reward_sum = 0
             episode_length = 0
             actions.clear()
@@ -263,4 +266,5 @@ def test(rank, args, shared_model, counter):
             env.change_level(0)
             state = env.reset()
 
-        state = torch.from_numpy(state)
+        state = torch.from_numpy(np.flip(state,axis=0).copy())
+        # state = torch.from_numpy(state)
