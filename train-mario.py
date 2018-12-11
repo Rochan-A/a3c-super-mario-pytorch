@@ -16,7 +16,7 @@ from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
 import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
-SAVEPATH = os.getcwd() + '/save/mario_a3c_params.pkl'
+SAVEPATH = os.getcwd() + '/save/trained-models/mario_a3c_params.pkl'
 
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--lr', type=float, default=0.0001,
@@ -84,10 +84,13 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    #p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+    train(args.num_processes, args, shared_model, counter)
 
-    #p.start()
-    #processes.append(p)
+'''
+    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+
+    p.start()
+    processes.append(p)
 
     num_procs = args.num_processes
     no_sample = args.non_sample
@@ -106,3 +109,4 @@ if __name__ == '__main__':
         processes.append(p)
     for p in processes:
         p.join()
+'''

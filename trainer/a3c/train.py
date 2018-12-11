@@ -200,7 +200,7 @@ def test(rank, args, shared_model, counter):
     # state = torch.from_numpy(state)
     reward_sum = 0
     done = True
-    savefile = os.getcwd() + '/save/mario_curves.csv'
+    savefile = os.getcwd() + '/save/trained-models/mario_curves.csv'
 
     title = ['Time','No. Steps', 'Total Reward', 'Episode Length']
     with open(savefile, 'a', newline='') as sfile:
@@ -240,7 +240,7 @@ def test(rank, args, shared_model, counter):
             reward_sum += reward
 
             # a quick hack to prevent the agent from stucking
-            actions.append(action[0, 0])
+            actions.append(action)
             if actions.count(actions[0]) == actions.maxlen:
                 done = True
 
