@@ -110,7 +110,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
             action_out = ACTIONS[action]
 
-            # print("Process: {} Action: {}".format(rank,  str(action_out)))
+            print("Process: {} Action: {}".format(rank, str(action_out)))
 
             state, reward, done, _ = env.step(action_out)
 
@@ -232,7 +232,7 @@ def test(rank, args, shared_model, counter):
             action = prob.max(-1, keepdim=True)[1].data
 
             action_out = ACTIONS[action]
-            # print("Process: Test Action: {}".format(str(action_out)))
+            print("Process: Test Action: {}".format(str(action_out)))
 
             state, reward, done, _ = env.step(action_out)
             env.render()
