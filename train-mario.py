@@ -12,6 +12,9 @@ from common.atari_wrapper import create_mario_env
 from optimizer.sharedadam import SharedAdam
 from trainer.a3c.train import train, test
 from common.mario_actions import ACTIONS
+from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 SAVEPATH = os.getcwd() + '/save/mario_a3c_params.pkl'
 
@@ -36,11 +39,11 @@ parser.add_argument('--num-steps', type=int, default=50,
                     help='number of forward steps in A3C (default: 50)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--env-name', default='SuperMarioBros-1-1-v0',
-                    help='environment to train on (default: SuperMarioBros-1-1-v0)')
+parser.add_argument('--env-name', default='SuperMarioBros-v0',
+                    help='environment to train on (default: SuperMarioBros-v0)')
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
-parser.add_argument('--use-cuda',default=True,
+parser.add_argument('--use-cuda',default=False,
                     help='run on gpu.')
 parser.add_argument('--save-interval', type=int, default=10,
                     help='model save interval (default: 10)')
@@ -57,10 +60,12 @@ if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
 
     args = parser.parse_args()
-    env = create_mario_env(args.env_name)
+    env = gym_super_mario_bros.make(env_id)
+    env_dis = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+    # env = create_mario_env(args.env_name)
 
-    shared_model = ActorCritic(
-        env.observation_space.shape[0], len(ACTIONS))
+    shared_model = ActorCritic( env.observation_space.shape[0], len(action_space))
+        # env.observation_space.shape[0], len(ACTIONS))
     if args.use_cuda:
         shared_model.cuda()
 

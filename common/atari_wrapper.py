@@ -4,9 +4,6 @@ import gym
 from gym import spaces
 from PIL import Image
 import cv2
-from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
-import gym_super_mario_bros
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
 def _process_frame_mario(frame):
     if frame is not None:           # for future meta implementation
@@ -148,8 +145,6 @@ def wrap_mario(env):
     return env
 
 def create_mario_env(env_id):
-    env = gym_super_mario_bros.make(env_id)
-    env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
-    # env = gym.make(env_id)
+    env = gym.make(env_id)
     env = wrap_mario(env)
     return env
