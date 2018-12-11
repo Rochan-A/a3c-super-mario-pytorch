@@ -40,7 +40,7 @@ parser.add_argument('--num-steps', type=int, default=50,
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
 parser.add_argument('--env-name', default='SuperMarioBros-v0',
-                    help='environment to train on (default: SuperMarioBros-v0)')
+                    help='environment to train on (default: SuperMarioBros-1-1-v0)')
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--use-cuda',default=False,
