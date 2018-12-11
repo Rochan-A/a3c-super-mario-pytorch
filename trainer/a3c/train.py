@@ -218,15 +218,18 @@ def test(rank, args, shared_model, counter):
         # Sync with the shared model
         if done:
             model.load_state_dict(shared_model.state_dict())
-            cx = Variable(torch.zeros(1, 512), volatile=True).type(FloatTensor)
-            hx = Variable(torch.zeros(1, 512), volatile=True).type(FloatTensor)
+            with torch.no_grad():
+                cx = Variable(torch.zeros(1, 512)).type(FloatTensor)
+                hx = Variable(torch.zeros(1, 512)).type(FloatTensor)
 
         else:
-            cx = Variable(cx.data, volatile=True).type(FloatTensor)
-            hx = Variable(hx.data, volatile=True).type(FloatTensor)
+            with torch.no_grad():
+                cx = Variable(cx.data).type(FloatTensor)
+                hx = Variable(hx.data).type(FloatTensor)
 
 
-        state_inp = Variable(state.unsqueeze(0), volatile=True).type(FloatTensor)
+        with torch.no_grad():
+            state_inp = Variable(state.unsqueeze(0)).type(FloatTensor)
         value, logit, (hx, cx) = model((state_inp, (hx, cx)))
         prob = F.softmax(logit, dim=-1)
         action = prob.max(-1, keepdim=True)[1].data
