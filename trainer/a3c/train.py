@@ -59,8 +59,8 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
     model.train()
 
     state = env.reset()
-    #state = torch.from_numpy(np.flip(state,axis=0).copy())
-    state = torch.from_numpy(state)
+    state = torch.from_numpy(np.flip(state,axis=0).copy())
+    # state = torch.from_numpy(state)
     done = True
 
     episode_length = 0
@@ -196,8 +196,8 @@ def test(rank, args, shared_model, counter):
     model.eval()
 
     state = env.reset()
-    # state = torch.from_numpy(np.flip(state,axis=0).copy())
-    state = torch.from_numpy(state)
+    state = torch.from_numpy(np.flip(state,axis=0).copy())
+    # state = torch.from_numpy(state)
     reward_sum = 0
     done = True
     savefile = os.getcwd() + '/save/mario_curves.csv'
@@ -269,5 +269,5 @@ def test(rank, args, shared_model, counter):
             env.change_level(0)
             state = env.reset()
 
-        # state = torch.from_numpy(np.flip(state,axis=0).copy())
-        state = torch.from_numpy(state)
+        state = torch.from_numpy(np.flip(state,axis=0).copy())
+        # state = torch.from_numpy(state)
