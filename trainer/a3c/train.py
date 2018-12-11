@@ -110,9 +110,9 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
             action_out = ACTIONS[action]
 
-            print("Process: {} Action: {}".format(rank, str(action_out)))
+            print("Process: {} Action: {}".format(rank, str(action)))
 
-            state, reward, done, _ = env.step(action_out)
+            state, reward, done, _ = env.step(action)
 
             done = done or episode_length >= args.max_episode_length
             reward = max(min(reward, 50), -50)
@@ -234,7 +234,7 @@ def test(rank, args, shared_model, counter):
             action_out = ACTIONS[action]
             print("Process: Test Action: {}".format(str(action_out)))
 
-            state, reward, done, _ = env.step(action_out)
+            state, reward, done, _ = env.step(action)
             env.render()
             done = done or episode_length >= args.max_episode_length
             reward_sum += reward
