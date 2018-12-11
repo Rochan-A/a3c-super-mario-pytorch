@@ -1,112 +1,106 @@
 import os
 import argparse
-import gym
-import numpy as np
 import torch
 import torch.cuda
 import torch.multiprocessing as _mp
+import gym_super_mario_bros
 
 from utils.font_color import color
 from models.actor_critic import ActorCritic
-from common.atari_wrapper import create_mario_env
 from optimizer.sharedadam import SharedAdam
 from trainer.a3c.train import train, test
 from common.mario_actions import ACTIONS
-from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
-import gym_super_mario_bros
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
-SAVEPATH = os.getcwd() + '/save/trained-models/mario_a3c_params.pkl'
+SAVEPATH = os.getcwd() + '/save/mario_a3c_params.pkl'
 
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--lr', type=float, default=0.0001,
-                    help='learning rate (default: 0.0001)')
+					help='learning rate (default: 0.0001)')
 parser.add_argument('--gamma', type=float, default=0.9,
-                    help='discount factor for rewards (default: 0.9)')
+					help='discount factor for rewards (default: 0.9)')
 parser.add_argument('--tau', type=float, default=1.00,
-                    help='parameter for GAE (default: 1.00)')
+					help='parameter for GAE (default: 1.00)')
 parser.add_argument('--entropy-coef', type=float, default=0.01,
-                    help='entropy term coefficient (default: 0.01)')
+					help='entropy term coefficient (default: 0.01)')
 parser.add_argument('--value-loss-coef', type=float, default=0.5,
-                    help='value loss coefficient (default: 0.5)')
+					help='value loss coefficient (default: 0.5)')
 parser.add_argument('--max-grad-norm', type=float, default=250,
-                    help='value loss coefficient (default: 50)')
+					help='value loss coefficient (default: 50)')
 parser.add_argument('--seed', type=int, default=1,
-                    help='random seed (default: 4)')
+					help='random seed (default: 4)')
 parser.add_argument('--num-processes', type=int, default=4,
-                    help='how many training processes to use (default: 4)')
+					help='how many training processes to use (default: 4)')
 parser.add_argument('--num-steps', type=int, default=50,
-                    help='number of forward steps in A3C (default: 50)')
+					help='number of forward steps in A3C (default: 50)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
-                    help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--env-name', default='SuperMarioBros-v0',
-                    help='environment to train on (default: SuperMarioBros-1-1-v0)')
+					help='maximum length of an episode (default: 1000000)')
+parser.add_argument('--env-name', default='SuperMarioBros-1-1-v0',
+					help='environment to train on (default: SuperMarioBros-1-1-v0)')
 parser.add_argument('--no-shared', default=False,
-                    help='use an optimizer without shared momentum.')
+					help='use an optimizer without shared momentum.')
 parser.add_argument('--use-cuda',default=False,
-                    help='run on gpu.')
+					help='run on gpu.')
 parser.add_argument('--save-interval', type=int, default=10,
-                    help='model save interval (default: 10)')
+					help='model save interval (default: 10)')
 parser.add_argument('--save-path',default=SAVEPATH,
-                    help='model save interval (default: {})'.format(SAVEPATH))
+					help='model save interval (default: {})'.format(SAVEPATH))
 parser.add_argument('--non-sample', type=int,default=2,
-                    help='number of non sampling processes (default: 2)')
+					help='number of non sampling processes (default: 2)')
 
 mp = _mp.get_context('spawn')
 
 print("Cuda: " + str(torch.cuda.is_available()))
 
 if __name__ == '__main__':
-    os.environ['OMP_NUM_THREADS'] = '1'
 
-    args = parser.parse_args()
-    env = gym_super_mario_bros.make(args.env_name)
+	os.environ['OMP_NUM_THREADS'] = '1'
 
-    shared_model = ActorCritic( env.observation_space.shape[0], len(ACTIONS))
-    if args.use_cuda:
-        shared_model.cuda()
+	args = parser.parse_args()
+	env = gym_super_mario_bros.make(args.env_name)
 
-    shared_model.share_memory()
+	shared_model = ActorCritic( env.observation_space.shape[0], len(ACTIONS))
+	if args.use_cuda:
+		shared_model.cuda()
 
-    if os.path.isfile(args.save_path):
-        print('Loading A3C parametets ...')
-        shared_model.load_state_dict(torch.load(args.save_path, map_location='cpu'))
+	shared_model.share_memory()
 
-    torch.manual_seed(args.seed)
+	if os.path.isfile(args.save_path):
+		print('Loading A3C parametets ...')
+		shared_model.load_state_dict(torch.load(args.save_path, map_location='cpu'))
 
-    optimizer = SharedAdam(shared_model.parameters(), lr=args.lr)
-    optimizer.share_memory()
+	torch.manual_seed(args.seed)
 
-    print (color.BLUE + "No of available cores : {}".format(mp.cpu_count()) + color.END)
+	optimizer = SharedAdam(shared_model.parameters(), lr=args.lr)
+	optimizer.share_memory()
 
-    processes = []
+	print (color.BLUE + "No of available cores : {}".format(mp.cpu_count()) + color.END)
 
-    counter = mp.Value('i', 0)
-    lock = mp.Lock()
+	processes = []
 
-    test(args.num_processes, args, shared_model, counter)
+	counter = mp.Value('i', 0)
+	lock = mp.Lock()
 
-'''
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+	# To test a pretrained model
+	# p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+	# p.start()
+	# processes.append(p)
 
-    p.start()
-    processes.append(p)
+	num_procs = args.num_processes
+	no_sample = args.non_sample
 
-    num_procs = args.num_processes
-    no_sample = args.non_sample
+	if args.num_processes > 1:
+		num_procs = args.num_processes - 1
 
-    if args.num_processes > 1:
-        num_procs = args.num_processes - 1
+	sample_val = num_procs - no_sample
 
-    sample_val = num_procs - no_sample
-
-    for rank in range(0, num_procs):
-        if rank < sample_val:                           # select random action
-            p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
-        else:                                           # select best action
-            p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, False))
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
-'''
+	for rank in range(0, num_procs):
+		# select random action
+		if rank < sample_val:
+			p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
+		# select best action
+		else:
+			p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, False))
+		p.start()
+		processes.append(p)
+	for p in processes:
+		p.join()
