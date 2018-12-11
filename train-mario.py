@@ -64,8 +64,8 @@ if __name__ == '__main__':
     env_dis = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
     # env = create_mario_env(args.env_name)
 
-    shared_model = ActorCritic( env.observation_space.shape[0], len(env_dis.action_space))
-        # env.observation_space.shape[0], len(ACTIONS))
+    shared_model = ActorCritic( env.observation_space.shape[0], len(ACTIONS))
+        env.observation_space.shape[0], len(ACTIONS))
     if args.use_cuda:
         shared_model.cuda()
 
