@@ -212,62 +212,59 @@ def test(rank, args, shared_model, counter):
     # a quick hack to prevent the agent from stucking
     actions = deque(maxlen=4000)
     episode_length = 0
-    while True:
-        episode_length += 1
-        ep_start_time = time.time()
-        # Sync with the shared model
-        if done:
-            model.load_state_dict(shared_model.state_dict())
-            with torch.no_grad():
-                cx = Variable(torch.zeros(1, 240)).type(FloatTensor)
-                hx = Variable(torch.zeros(1, 240)).type(FloatTensor)
+    with torch.no_grad():
+        while True:
+            episode_length += 1
+            ep_start_time = time.time()
+            # Sync with the shared model
+            if done:
+                model.load_state_dict(shared_model.state_dict())
+                    cx = Variable(torch.zeros(1, 240)).type(FloatTensor)
+                    hx = Variable(torch.zeros(1, 240)).type(FloatTensor)
 
-        else:
-            with torch.no_grad():
-                cx = Variable(cx.data).type(FloatTensor)
-                hx = Variable(hx.data).type(FloatTensor)
+            else:
+                    cx = Variable(cx.data).type(FloatTensor)
+                    hx = Variable(hx.data).type(FloatTensor)
 
-
-        with torch.no_grad():
             state_inp = Variable(state.unsqueeze(0)).type(FloatTensor)
-        value, logit, (hx, cx) = model((state_inp, (hx, cx)))
-        prob = F.softmax(logit, dim=-1)
-        action = prob.max(-1, keepdim=True)[1].data
+            value, logit, (hx, cx) = model((state_inp, (hx, cx)))
+            prob = F.softmax(logit, dim=-1)
+            action = prob.max(-1, keepdim=True)[1].data
 
-        action_out = ACTIONS[action][0, 0]
-        # print("Process: Test Action: {}".format(str(action_out)))
+            action_out = ACTIONS[action][0, 0]
+            # print("Process: Test Action: {}".format(str(action_out)))
 
-        state, reward, done, _ = env.step(action_out)
-        env.render()
-        done = done or episode_length >= args.max_episode_length
-        reward_sum += reward
+            state, reward, done, _ = env.step(action_out)
+            env.render()
+            done = done or episode_length >= args.max_episode_length
+            reward_sum += reward
 
-        # a quick hack to prevent the agent from stucking
-        actions.append(action[0, 0])
-        if actions.count(actions[0]) == actions.maxlen:
-            done = True
+            # a quick hack to prevent the agent from stucking
+            actions.append(action[0, 0])
+            if actions.count(actions[0]) == actions.maxlen:
+                done = True
 
-        if done:
-            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
-                time.strftime("%Hh %Mm %Ss",
-                              time.gmtime(time.time() - start_time)),
-                counter.value, counter.value / (time.time() - start_time),
-                reward_sum, episode_length))
+            if done:
+                print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
+                    time.strftime("%Hh %Mm %Ss",
+                                time.gmtime(time.time() - start_time)),
+                    counter.value, counter.value / (time.time() - start_time),
+                    reward_sum, episode_length))
 
-            data = [time.time() - ep_start_time,
-                    counter.value, reward_sum, episode_length]
+                data = [time.time() - ep_start_time,
+                        counter.value, reward_sum, episode_length]
 
-            with open(savefile, 'a', newline='') as sfile:
-                writer = csv.writer(sfile)
-                writer.writerows([data])
+                with open(savefile, 'a', newline='') as sfile:
+                    writer = csv.writer(sfile)
+                    writer.writerows([data])
 
-            reward_sum = 0
-            episode_length = 0
-            actions.clear()
-            time.sleep(60)
-            env.locked_levels = [False] + [True] * 31
-            env.change_level(0)
-            state = env.reset()
+                reward_sum = 0
+                episode_length = 0
+                actions.clear()
+                time.sleep(60)
+                env.locked_levels = [False] + [True] * 31
+                env.change_level(0)
+                state = env.reset()
 
-        state = torch.from_numpy(np.flip(state,axis=0).copy())
-        # state = torch.from_numpy(state)
+            state = torch.from_numpy(np.flip(state,axis=0).copy())
+            # state = torch.from_numpy(state)
