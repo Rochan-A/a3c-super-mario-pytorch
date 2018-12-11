@@ -60,7 +60,7 @@ if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
 
     args = parser.parse_args()
-    env = gym_super_mario_bros.make(env_id)
+    env = gym_super_mario_bros.make(args.env_name)
     env_dis = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
     # env = create_mario_env(args.env_name)
 
