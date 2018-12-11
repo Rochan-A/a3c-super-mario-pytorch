@@ -108,7 +108,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
             log_prob = log_prob.gather(-1, Variable(action))
 
-            action_out = ACTIONS[action][0, 0]
+            action_out = ACTIONS[action]
 
             # print("Process: {} Action: {}".format(rank,  str(action_out)))
 
@@ -231,7 +231,7 @@ def test(rank, args, shared_model, counter):
             prob = F.softmax(logit, dim=-1)
             action = prob.max(-1, keepdim=True)[1].data
 
-            action_out = ACTIONS[action][0, 0]
+            action_out = ACTIONS[action]
             # print("Process: Test Action: {}".format(str(action_out)))
 
             state, reward, done, _ = env.step(action_out)
