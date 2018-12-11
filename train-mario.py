@@ -61,11 +61,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     env = gym_super_mario_bros.make(args.env_name)
-    env_dis = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
-    # env = create_mario_env(args.env_name)
 
     shared_model = ActorCritic( env.observation_space.shape[0], len(ACTIONS))
-        env.observation_space.shape[0], len(ACTIONS))
     if args.use_cuda:
         shared_model.cuda()
 
@@ -99,7 +96,6 @@ if __name__ == '__main__':
         num_procs = args.num_processes - 1
 
     sample_val = num_procs - no_sample
-
 
     for rank in range(0, num_procs):
         if rank < sample_val:                           # select random action
