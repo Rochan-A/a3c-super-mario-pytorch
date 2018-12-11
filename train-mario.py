@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     if os.path.isfile(args.save_path):
         print('Loading A3C parametets ...')
-        shared_model.load_state_dict(torch.load(args.save_path))
+        shared_model.load_state_dict(torch.load(args.save_path, maplocation='cpu'))
 
     torch.manual_seed(args.seed)
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    train(args.num_processes, args, shared_model, counter)
+    test(args.num_processes, args, shared_model, counter)
 
 '''
     p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
