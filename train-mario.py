@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     if os.path.isfile(args.save_path):
         print('Loading A3C parametets ...')
-        shared_model.load_state_dict(torch.load(args.save_path, maplocation='cpu'))
+        shared_model.load_state_dict(torch.load(args.save_path, map_location='cpu'))
 
     torch.manual_seed(args.seed)
 
