@@ -102,7 +102,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 			log_prob = log_prob.gather(-1, Variable(action))
 
 			action_out = COMPLEX_MOVEMENT[action]
-			env.render()
+			# env.render()
 			state, reward, done, _ = env.step(int(action))
 
 			done = done or episode_length >= args.max_episode_length
