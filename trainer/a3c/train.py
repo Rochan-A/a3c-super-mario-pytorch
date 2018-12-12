@@ -14,20 +14,15 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 from models.actor_critic import ActorCritic
-# from common.atari_wrapper import create_mario_env
-from common.mario_actions import ACTIONS
-
-from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
-import gym_super_mario_bros
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from common.atari_wrapper import create_mario_env
+from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
 
 def ensure_shared_grads(model, shared_model):
 	for param, shared_param in zip(model.parameters(),
-									shared_model.parameters()):
+						shared_model.parameters()):
 		if shared_param.grad is not None:
 			return
 		shared_param._grad = param.grad
-
 
 def choose_action(model, state, hx, cx):
 	self.eval()
@@ -45,11 +40,12 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 	DoubleTensor = torch.cuda.DoubleTensor if args.use_cuda else torch.DoubleTensor
 	ByteTensor = torch.cuda.ByteTensor if args.use_cuda else torch.ByteTensor
 
-
-	env = gym_super_mario_bros.make(args.env_name)
+	env = create_mario_env(args.env_name)
+	# env = gym_super_mario_bros.make(args.env_name)
+	# env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
 	env.seed(args.seed + rank)
 
-	model = ActorCritic(env.observation_space.shape[0], len(ACTIONS))
+	model = ActorCritic(env.observation_space.shape[0], len(COMPLEX_MOVEMENT))
 	if args.use_cuda:
 		model.cuda()
 	if optimizer is None:
@@ -105,7 +101,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
 			log_prob = log_prob.gather(-1, Variable(action))
 
-			action_out = ACTIONS[action]
+			action_out = COMPLEX_MOVEMENT[action]
 			env.render()
 			state, reward, done, _ = env.step(int(action))
 
@@ -117,7 +113,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
 			if done:
 				episode_length = 0
-				env.change_level(0)
+				# env.change_level(0)
 				state = env.reset()
 				print ("Process {} has completed.".format(rank))
 
@@ -156,7 +152,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 
 		total_loss = policy_loss + args.value_loss_coef * value_loss
 
-		print ("Process {} - Reward: {} loss: ".format(rank, str(rewards)), total_loss.data)
+		print ("Process {}: Episode Length: {} loss: {}".format(rank, str(episode_length), total_loss.data))
 		optimizer.zero_grad()
 
 		(total_loss).backward()
@@ -173,8 +169,10 @@ def test(rank, args, shared_model, counter):
 	DoubleTensor = torch.cuda.DoubleTensor if args.use_cuda else torch.DoubleTensor
 	ByteTensor = torch.cuda.ByteTensor if args.use_cuda else torch.ByteTensor
 
-	env = gym_super_mario_bros.make(args.env_name)
-	# env = create_mario_env(args.env_name)
+	env = create_mario_env(args.env_name)
+	# env = gym_super_mario_bros.make(args.env_name)
+	# env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
+
 	"""
 		need to implement Monitor wrapper with env.change_level
 	"""
@@ -183,14 +181,13 @@ def test(rank, args, shared_model, counter):
 
 	env.seed(args.seed + rank)
 
-	model = ActorCritic(env.observation_space.shape[0], len(ACTIONS))
+	model = ActorCritic(env.observation_space.shape[0], len(COMPLEX_MOVEMENT))
 	if args.use_cuda:
 		model.cuda()
 	model.eval()
 
 	state = env.reset()
 	state = torch.from_numpy(np.flip(state,axis=0).copy())
-	# state = torch.from_numpy(state)
 	reward_sum = 0
 	done = True
 	savefile = os.getcwd() + '/save/mario_curves.csv'
@@ -202,7 +199,7 @@ def test(rank, args, shared_model, counter):
 
 	start_time = time.time()
 
-	# a quick hack to prevent the agent from stucking
+	# a quick hack to prevent the agent from getting stuck
 	actions = deque(maxlen=4000)
 	episode_length = 0
 	with torch.no_grad():
@@ -224,7 +221,7 @@ def test(rank, args, shared_model, counter):
 			prob = F.softmax(logit, dim=-1)
 			action = prob.max(-1, keepdim=True)[1].data
 
-			action_out = ACTIONS[action]
+			action_out = COMPLEX_MOVEMENT[action]
 			# print("Process: Test Action: {}".format(str(action_out)))
 
 			state, reward, done, _ = env.step(int(action))
@@ -232,7 +229,7 @@ def test(rank, args, shared_model, counter):
 			done = done or episode_length >= args.max_episode_length
 			reward_sum += reward
 
-			# a quick hack to prevent the agent from stucking
+			# a quick hack to prevent the agent from getting stuck
 			actions.append(action)
 			if actions.count(actions[0]) == actions.maxlen:
 				done = True

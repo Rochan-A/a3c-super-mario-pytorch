@@ -3,13 +3,13 @@ import argparse
 import torch
 import torch.cuda
 import torch.multiprocessing as _mp
-import gym_super_mario_bros
 
 from utils.font_color import color
 from models.actor_critic import ActorCritic
+from common.atari_wrapper import create_mario_env
 from optimizer.sharedadam import SharedAdam
 from trainer.a3c.train import train, test
-from common.mario_actions import ACTIONS
+from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
 
 SAVEPATH = os.getcwd() + '/save/mario_a3c_params.pkl'
 
@@ -44,8 +44,8 @@ parser.add_argument('--save-interval', type=int, default=10,
 					help='model save interval (default: 10)')
 parser.add_argument('--save-path',default=SAVEPATH,
 					help='model save interval (default: {})'.format(SAVEPATH))
-parser.add_argument('--non-sample', type=int,default=2,
-					help='number of non sampling processes (default: 2)')
+parser.add_argument('--non-sample', type=int,default=1,
+					help='number of non sampling processes (default: 1)')
 
 mp = _mp.get_context('spawn')
 
@@ -56,9 +56,9 @@ if __name__ == '__main__':
 	os.environ['OMP_NUM_THREADS'] = '1'
 
 	args = parser.parse_args()
-	env = gym_super_mario_bros.make(args.env_name)
+	env = create_mario_env(args.env_name)
 
-	shared_model = ActorCritic( env.observation_space.shape[0], len(ACTIONS))
+	shared_model = ActorCritic( env.observation_space.shape[0], len(COMPLEX_MOVEMENT))
 	if args.use_cuda:
 		shared_model.cuda()
 

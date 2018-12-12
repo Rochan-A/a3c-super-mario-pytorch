@@ -4,9 +4,13 @@ import gym
 from gym import spaces
 import cv2
 
+from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
+import gym_super_mario_bros
+from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
+
 def _process_frame_mario(frame):
 	if frame is not None:           # for future meta implementation
-		img = np.reshape(frame, [224, 256, 3]).astype(np.float32)
+		img = np.reshape(frame, [240, 256, 3]).astype(np.float32)
 		img = img[:, :, 0] * 0.299 + img[:, :, 1] * 0.587 + img[:, :, 2] * 0.114
 		x_t = cv2.resize(img, (84, 84))
 		x_t = np.reshape(x_t, [1, 84, 84])
@@ -36,21 +40,20 @@ class ProcessFrameMario(gym.Wrapper):
 		'''
 		obs, reward, done, info = self.env.step(action)
 
-
-		reward = min(max((info['distance'] - self.prev_dist), 0), 2)
-		self.prev_dist = info['distance']
+		reward = min(max((info['x_pos'] - self.prev_dist), 0), 2)
+		self.prev_dist = info['x_pos']
 
 		reward += (self.prev_time - info['time']) * -0.1
 		self.prev_time = info['time']
 
-		reward += (info['player_status'] - self.prev_stat) * 5
-		self.prev_stat = info['player_status']
+		reward += (info['coins'] - self.prev_stat) * 5
+		self.prev_stat = info['coins']
 
 		reward += (info['score'] - self.prev_score) * 0.025
 		self.prev_score = info['score']
 
 		if done:
-			if info['distance'] >= 3225:
+			if info['x_pos'] >= 3225:
 				reward += 50
 			else:
 				reward -= 50
@@ -66,7 +69,6 @@ class ProcessFrameMario(gym.Wrapper):
 
 	def change_level(self, level):
 		self.env.change_level(level)
-
 
 class BufferSkipFrames(gym.Wrapper):
 	def __init__(self, env=None, skip=4, shape=(84, 84)):
@@ -144,6 +146,7 @@ def wrap_mario(env):
 	return env
 
 def create_mario_env(env_id):
-	env = gym.make(env_id)
+	env = gym_super_mario_bros.make(env_id)
+	env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
 	env = wrap_mario(env)
 	return env
