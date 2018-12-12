@@ -81,9 +81,9 @@ if __name__ == '__main__':
 	lock = mp.Lock()
 
 	# To test a pretrained model
-	# p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
-	# p.start()
-	# processes.append(p)
+	p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+	p.start()
+	processes.append(p)
 
 	num_procs = args.num_processes
 	no_sample = args.non_sample
