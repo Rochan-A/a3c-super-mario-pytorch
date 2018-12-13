@@ -80,6 +80,8 @@ if __name__ == '__main__':
 	counter = mp.Value('i', 0)
 	lock = mp.Lock()
 
+	#test(0, args, shared_model, counter)
+
 	# To test a pretrained model
 	p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
 	p.start()

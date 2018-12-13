@@ -225,7 +225,7 @@ def test(rank, args, shared_model, counter):
 			# print("Process: Test Action: {}".format(str(action_out)))
 
 			state, reward, done, _ = env.step(int(action))
-			# env.render()
+			env.render()
 			done = done or episode_length >= args.max_episode_length
 			reward_sum += reward
 
@@ -251,9 +251,9 @@ def test(rank, args, shared_model, counter):
 				reward_sum = 0
 				episode_length = 0
 				actions.clear()
-				time.sleep(60)
+				#time.sleep(60)
 				env.locked_levels = [False] + [True] * 31
-				env.change_level(0)
+				#env.change_level(0)
 				state = env.reset()
 
 			state = torch.from_numpy(np.flip(state,axis=0).copy())
