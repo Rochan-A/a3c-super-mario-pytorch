@@ -27,25 +27,31 @@ class ProcessFrameMario(gym.Wrapper):
 		self.prev_stat = 0
 		self.prev_score = 0
 		self.prev_state = 'small'
+		self.prev_time = 0
+		self.prev_pos = 0
 
 	def _step(self, action):
 
 		obs, reward, done, info = self.env.step(action)
 
-		reward = reward
-
-		reward += (info['coins'] - self.prev_stat) * 10
+		reward += (info['coins'] - self.prev_stat) * 5
 		self.prev_stat = info['coins']
+
+		reward = min(max((info['x_pos'] - self.prev_pos), 0), 2)
+		self.prev_pos = info['x_pos']
+
+		reward += (self.prev_time - info['time']) * -0.1
+		self.prev_time = info['time']
 
 		if info['status'] != self.prev_state and info['status'] != 'small':
 			self.prev_state = info['status']
-			reward += 50
+			reward += 10
 		elif info['status'] != self.prev_state and info['status'] == 'small':
 			self.prev_state = 'small'
 		else:
 			reward = reward
 
-		reward += (info['score'] - self.prev_score) * 0.25
+		reward += (info['score'] - self.prev_score) * 0.025
 		self.prev_score = info['score']
 
 		if done:
@@ -57,8 +63,10 @@ class ProcessFrameMario(gym.Wrapper):
 		return _process_frame_mario(obs), reward, done, info
 
 	def _reset(self):
+		self.prev_time = 0
 		self.prev_stat = 0
 		self.prev_score = 0
+		self.prev_pos = 0
 		self.prev_state = 'small'
 		return _process_frame_mario(self.env.reset())
 

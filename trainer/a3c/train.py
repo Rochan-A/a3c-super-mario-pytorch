@@ -106,7 +106,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None, select_sample
 			state, reward, done, _ = env.step(int(action))
 
 			done = done or episode_length >= args.max_episode_length
-			reward = max(min(reward, 50), -50)
+			reward = int(reward)
 
 			with lock:
 				counter.value += 1
