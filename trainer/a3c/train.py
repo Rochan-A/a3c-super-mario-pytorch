@@ -225,7 +225,7 @@ def test(rank, args, shared_model, counter):
 			# print("Process: Test Action: {}".format(str(action_out)))
 
 			state, reward, done, _ = env.step(int(action))
-			env.render()
+			# env.render()
 			done = done or episode_length >= args.max_episode_length
 			reward_sum += reward
 
