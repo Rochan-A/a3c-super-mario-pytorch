@@ -43,7 +43,7 @@ class ProcessFrameMario(gym.Wrapper):
 		elif info['status'] != self.prev_state and info['status'] == 'small':
 			self.prev_state = 'small'
 		else:
-			continue
+			reward = reward
 
 		reward += (info['score'] - self.prev_score) * 0.25
 		self.prev_score = info['score']
