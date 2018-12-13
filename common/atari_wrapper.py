@@ -24,47 +24,35 @@ class ProcessFrameMario(gym.Wrapper):
 	def __init__(self, env=None):
 		super(ProcessFrameMario, self).__init__(env)
 		self.observation_space = gym.spaces.Box(low=0, high=255, shape=(1, 84, 84))
-		self.prev_time = 400
 		self.prev_stat = 0
 		self.prev_score = 0
-		self.prev_dist = 40
 
 	def _step(self, action):
-		'''
-			Implementing custom rewards
-				Time = -0.1
-				Distance = +1 or 0
-				Player Status = +/- 5
-				Score = 2.5 x [Increase in Score]
-				Done = +50 [Game Completed] or -50 [Game Incomplete]
-		'''
+
 		obs, reward, done, info = self.env.step(action)
 
-		reward = min(max((info['x_pos'] - self.prev_dist), 0), 2)
-		self.prev_dist = info['x_pos']
+		reward = reward
 
-		reward += (self.prev_time - info['time']) * -0.1
-		self.prev_time = info['time']
-
-		reward += (info['coins'] - self.prev_stat) * 5
+		reward += (info['coins'] - self.prev_stat) * 10
 		self.prev_stat = info['coins']
 
-		reward += (info['score'] - self.prev_score) * 0.025
+		if info['status'] != 'small':
+			reward += 50
+
+		reward += (info['score'] - self.prev_score) * 0.25
 		self.prev_score = info['score']
 
 		if done:
-			if info['x_pos'] >= 3225:
-				reward += 50
+			if info['flag_get']:
+				reward += 100
 			else:
 				reward -= 50
 
 		return _process_frame_mario(obs), reward, done, info
 
 	def _reset(self):
-		self.prev_time = 400
 		self.prev_stat = 0
 		self.prev_score = 0
-		self.prev_dist = 40
 		return _process_frame_mario(self.env.reset())
 
 	def change_level(self, level):
