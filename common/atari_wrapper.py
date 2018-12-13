@@ -26,6 +26,7 @@ class ProcessFrameMario(gym.Wrapper):
 		self.observation_space = gym.spaces.Box(low=0, high=255, shape=(1, 84, 84))
 		self.prev_stat = 0
 		self.prev_score = 0
+		self.prev_state = 'small'
 
 	def _step(self, action):
 
@@ -36,8 +37,13 @@ class ProcessFrameMario(gym.Wrapper):
 		reward += (info['coins'] - self.prev_stat) * 10
 		self.prev_stat = info['coins']
 
-		if info['status'] != 'small':
+		if info['status'] != self.prev_state and info['status'] != 'small':
+			self.prev_state = info['status']
 			reward += 50
+		elif info['status'] != self.prev_state and info['status'] == 'small':
+			self.prev_state = 'small'
+		else:
+			continue
 
 		reward += (info['score'] - self.prev_score) * 0.25
 		self.prev_score = info['score']
@@ -53,6 +59,7 @@ class ProcessFrameMario(gym.Wrapper):
 	def _reset(self):
 		self.prev_stat = 0
 		self.prev_score = 0
+		self.prev_state = 'small'
 		return _process_frame_mario(self.env.reset())
 
 	def change_level(self, level):
