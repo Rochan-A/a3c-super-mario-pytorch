@@ -37,10 +37,10 @@ class ProcessFrameMario(gym.Wrapper):
 		reward += (info['coins'] - self.prev_stat) * 5
 		self.prev_stat = info['coins']
 
-		reward += min(max((info['x_pos'] - self.prev_pos), 0), 2)
+		reward += (info['x_pos'] - self.prev_pos)
 		self.prev_pos = info['x_pos']
 
-		reward += (self.prev_time - info['time']) * -0.1
+		reward += (self.prev_time - info['time']) * -0.5
 		self.prev_time = info['time']
 
 		if info['status'] != self.prev_state and info['status'] != 'small':
@@ -51,7 +51,7 @@ class ProcessFrameMario(gym.Wrapper):
 		else:
 			reward = reward
 
-		reward += (info['score'] - self.prev_score) * 0.05
+		reward += (info['score'] - self.prev_score)
 		self.prev_score = info['score']
 
 		if done:
