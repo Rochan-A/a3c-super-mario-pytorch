@@ -5,5 +5,5 @@ __pycache__
 *.pyc
 1-1/*
 1-2/*
-save/mario_*
+save/*
 save.tar.gz
