@@ -176,8 +176,8 @@ def test(rank, args, shared_model, counter):
 	"""
 		need to implement Monitor wrapper with env.change_level
 	"""
-	# expt_dir = 'video'
-	# env = wrappers.Monitor(env, expt_dir, force=True, video_callable=lambda count: count % 10 == 0)
+	expt_dir = 'video/mario'
+	env = wrappers.Monitor(env, expt_dir, force=True, video_callable=lambda count: count % 10 == 0)
 
 	env.seed(args.seed + rank)
 
@@ -225,7 +225,7 @@ def test(rank, args, shared_model, counter):
 			# print("Process: Test Action: {}".format(str(action_out)))
 
 			state, reward, done, _ = env.step(int(action))
-			env.render()
+			# env.render()
 			done = done or episode_length >= args.max_episode_length
 			reward_sum += reward
 
